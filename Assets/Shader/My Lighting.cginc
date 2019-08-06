@@ -112,13 +112,9 @@ UnityIndirect CreateIndirectLight(Interpolators i, float3 viewDir) {
 	return indirectLight;
 }
 
-float3 GetTangetSpaceNormal(Interpolators i) {
-	return UnpackScaleNormal(tex2D(_NormalMap, i.uv.xy), _BumpScale);
-}
-
 // normal maps
 void InitializeFragmentNormal(inout Interpolators i) {
-	float3 tangentSpaceNormal = GetTangetSpaceNormal(i);
+	float3 tangentSpaceNormal = UnpackScaleNormal(tex2D(_NormalMap, i.uv.xy), _BumpScale);
 
 	i.normal = normalize(
 		tangentSpaceNormal.x * i.tangent +
