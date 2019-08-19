@@ -9,6 +9,8 @@ using UnityEngine;
 
 public class LightRays : MonoBehaviour
 {
+    public Material incMat, diffMat, specMat;
+
     Vector3 lightPoint;
     Vector3 reflectionPoint;
 
@@ -16,6 +18,8 @@ public class LightRays : MonoBehaviour
     Vector3 actualNormal;
     Vector3 incoming;
     Vector3 reflection;
+
+    float normalOffsetAngle;
 
     float totalWidth = 0.05f;
 
@@ -39,14 +43,15 @@ public class LightRays : MonoBehaviour
 
         // draw incoming line
         var line = gameObject.AddComponent<LineRenderer>();
+        line.material = incMat;
         line.positionCount = 2;
-        line.startColor = Color.yellow;
         line.startWidth = totalWidth;
         line.SetPosition(0, lightPoint);
         line.SetPosition(1, reflectionPoint);
         line.useWorldSpace = true;
 
         drawSpecular();
+        drawDiffuse();
     }
 
     public void setMetalness(float metalness) {
@@ -81,6 +86,11 @@ public class LightRays : MonoBehaviour
             normal.y = normalTex.GetPixelBilinear(texCoord.x, texCoord.y).g;
             normal.z = normalTex.GetPixelBilinear(texCoord.x, texCoord.y).b;
 
+            // only needs to be done once
+            incoming = reflectionPoint - pos;
+            // only needs to be recalculated after map change
+            reflection = reflectionPoint + Vector3.Reflect(incoming, actualNormal);
+
             //normal = Vector3.Normalize(normal);
         }
     }
@@ -92,15 +102,11 @@ public class LightRays : MonoBehaviour
         // assumes that width is metalness fraction
         specLine.startWidth = totalWidth * metalness;
         specLine.SetPosition(0, reflectionPoint);
-        // calculate reflection
-        reflection = reflectionPoint + Vector3.Reflect(incoming, actualNormal);
         specLine.SetPosition(1, reflection);
         specLine.useWorldSpace = false;
+        specLine.material = specMat;
 
-        // offsetting with normal map
-        // angle with 128 128 256 as that is base in normal map
-        float angle = Vector3.Angle(normal, new Vector3(128, 127, 255));
-        Debug.Log(angle);
+        // Debug.Log(normalOffsetAngle);
 
         Destroy(specular);
 
@@ -118,8 +124,8 @@ public class LightRays : MonoBehaviour
             extraLines[i].GetComponent<LineRenderer>().startWidth = specWidth / numberOfSpecRays;
 
             // factoring in smoothness, smoother should result in denser highlight
-            float minTilt = -angle - (float)System.Math.Pow(5 * (1 - smoothness), 2);
-            float maxTilt = angle + (float)System.Math.Pow(5 * (1 - smoothness), 2);
+            float minTilt = -normalOffsetAngle - (float)System.Math.Pow(5 * (1 - smoothness), 2);
+            float maxTilt = normalOffsetAngle + (float)System.Math.Pow(5 * (1 - smoothness), 2);
             float[] tilt = {
                 Random.Range(minTilt, maxTilt), 
                 Random.Range(minTilt, maxTilt), 
@@ -136,26 +142,39 @@ public class LightRays : MonoBehaviour
 
         diffuseLines = new GameObject[numberOfDiffRays];
 
-        foreach(GameObject g in diffuseLines) {
-            var line = g.AddComponent<LineRenderer>();
+        for(int i = 0; i < numberOfDiffRays; i++) {
+            diffuseLines[i] = new GameObject("diffuse ray");
+
+            var line = diffuseLines[i].AddComponent<LineRenderer>();
             line.positionCount = 2;
             line.startColor = Color.red;
             line.startWidth = diffWidth / numberOfDiffRays;
             line.SetPosition(0, reflectionPoint);
+            line.SetPosition(1, reflection);
+            line.useWorldSpace = false;
+
+            line.material = diffMat;
         }
     }
 
     void destroyAndRefresh() {
-        // since spec currently based solely on metalness, destroy and recreate
-        // with new values
-        Destroy(specular);
+        // self explanatory tbh
         foreach(GameObject s in extraLines) {
             Destroy(s);
         }
         drawSpecular();
+
+        foreach(GameObject g in diffuseLines) {
+            Destroy(g);
+        }
+        drawDiffuse();
     }
 
     void Update() {
+        // offsetting with normal map
+        // angle with 128 128 256 as that is base in normal map
+        normalOffsetAngle = Vector3.Angle(normal, new Vector3(128, 127, 255));
+
         findReflectionPoint(lightPoint, GameObject.Find("Spot Light").transform.forward);
     }
 }
