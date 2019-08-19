@@ -20,6 +20,7 @@ public class UIController : MonoBehaviour {
         albedo[0] = Texture2D.whiteTexture;
 
         renderer.material.SetTexture("_MainTex", Texture2D.whiteTexture);
+        renderer.material.SetTexture("_NormalMap", Texture2D.normalTexture);
         currentTexture = 0;
     }
 
