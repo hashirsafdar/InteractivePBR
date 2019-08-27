@@ -9,7 +9,7 @@ source does not include textures, which are part of Quixel's [Megascans library]
 
 <img src="https://github.com/SafeFatNoob/InteractivePBR/blob/master/Assets/og.png" alt="current build" width="500"/>
 
-there's also an in development version that shows the specular rays of light
+there's also an in development version that shows the rays of light
 
 <img src="https://github.com/SafeFatNoob/InteractivePBR/blob/master/Assets/dev.png" alt="dev build" width="500"/>
 this one isn't hosted, but the build is available in the lightRaysWoo branch.
